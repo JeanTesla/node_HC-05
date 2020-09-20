@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <script src="socket.io.js"></script>
+    <script>
+        const socket = io('http://localhost:4000');
+    </script>
+
+    <script type='text/javascript' src="highCharts/highCharts.js"></script>
+    <script type='text/javascript' src="highCharts/highCharts-more.js"></script>
+    <script type='text/javascript' src="highCharts/solid-gauge.js"></script>
+    <script type='text/javascript' src="highCharts/bullet.js"></script>
+    <script type='text/javascript' src="highCharts/exporting.js"></script>
+    <script type='text/javascript' src="highCharts/export-data.js"></script>
+    <script type='text/javascript' src="highCharts/accessibility.js"></script>
+
+    <script type='text/javascript' src="jquery.js"></script>
+
+    <script type='text/javascript' src="bootstrap/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href='bootstrap/css/bootstrap.min.css' </head>
+
+<body>
+    <Tesla Corporation <br>
+
+        <ul>
+            <li>Use as setas para movimentar</li>
+            <li>Shift aumenta a velocidade</li>
+            <li>Control diminui a velocidade</li>
+            <li>A tecla 'a' controla o piscar do led.</li>
+            <li>1, 2 e 3 alteram a sensibilidade da direção</li>
+        </ul>
+
+        <div class='row'>
+            <div class='col-sm mt-n3'>
+                <div id="container-marcha" style='width: 400px; height: 350px;'></div>
+            </div>
+            <div class='col-sm-4 mt-5'>
+                <div id="container-sensibilidade" style='width: 500px; height: 200px;'></div>
+            </div>
+            <div class='col-sm text-center'>
+                <div id="container-velocidade" style='width: 400px; height: 400px;'></div>
+            </div>
+        </div>
+
+
+
+
+        <!-- <div id='div_velocidade'>Velocidade Atual -->
+        <script type='text/javascript'>
+
+
+            class Carro {
+                constructor() {
+
+                    this.marchaMax = 4
+                    this.marchaMin = 0
+                    this.marchaAtual = 0
+
+                    this.velocidadeAtual = 0
+
+                    this.luzTraseira = false
+
+                    this.marchaXvelocidade = [[0, 0], [1, 50], [2, 100], [3, 150], [4, 200]];
+
+                    this.sensibilidadeMax = 4
+                    this.sensibilidadeMin = 0
+                    this.sensibilidadeAtual = 0
+                }
+
+                subirMarcha() {
+                    if (this.marchaAtual < this.marchaMax) {
+                        this.marchaAtual += 1
+                    }
+                    console.log(this.marchaAtual)
+                    return this.marchaAtual
+                }
+                descerMarcha() {
+                    if (this.marchaAtual > this.marchaMin) {
+                        this.marchaAtual -= 1
+                    }
+                    console.log(this.marchaAtual)
+                    return this.marchaAtual
+                }
+
+                frente() {
+                    this.marchaXvelocidade.map(r => {
+                        if (r[0] === this.marchaAtual) {
+                            this.velocidadeAtual = r[1]
+                        }
+                    })
+                    return this.velocidadeAtual
+                }
+                tras() {
+                    this.marchaXvelocidade.map(r => {
+                        if (r[0] === this.marchaAtual) {
+                            this.velocidadeAtual = r[1]
+                        }
+                    })
+                    return this.velocidadeAtual
+                }
+
+                sensibilidade(sens) {
+                    this.sensibilidadeAtual = sens
+                    return this.sensibilidadeAtual
+                }
+
+            }
+
+
+            const carro = new Carro()
+
+
+
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // --------------------------------------- GAUGE MARCHA ------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------// 
+
+
+            var gaugeOptions = {
+                chart: {
+                    type: 'solidgauge'
+                },
+                title: null,
+                pane: {
+                    center: ['50%', '85%'],
+                    size: '100%',
+                    startAngle: -90,
+                    endAngle: 90,
+                    background: {
+                        backgroundColor:
+                            Highcharts.defaultOptions.legend.backgroundColor || '#EEE',
+                        innerRadius: '60%',
+                        outerRadius: '100%',
+                        shape: 'arc'
+                    }
+                },
+                exporting: { enabled: false },
+                tooltip: { enabled: false },
+                // the value axis
+                yAxis: {
+                    stops: [
+                        [0.1, '#55BF3B'], // green
+                        [0.5, '#DDDF0D'], // yellow
+                        [0.9, '#DF5353'] // red
+                    ],
+                    lineWidth: 0,
+                    tickWidth: 0,
+                    minorTickInterval: null,
+                    tickAmount: 2,
+                    title: {
+                        y: -70
+                    },
+                    labels: {
+                        y: 16
+                    }
+                },
+
+                plotOptions: {
+                    solidgauge: {
+                        dataLabels: {
+                            y: 5,
+                            borderWidth: 0,
+                            useHTML: true
+                        }
+                    }
+                }
+            };
+
+            // The speed gauge
+            var gaugeMarcha = Highcharts.chart('container-marcha', Highcharts.merge(gaugeOptions, {
+                yAxis: {
+                    min: 0,
+                    max: 4,
+                    title: {
+                        text: ''
+                    }
+                },
+
+                credits: {
+                    enabled: false
+                },
+
+                series: [{
+                    name: 'Marcha',
+                    data: [0],
+                    dataLabels: {
+                        format:
+                            '<div style="text-align:center">' +
+                            '<span style="font-size:25px">{y}º</span><br/>' +
+                            '<span style="font-size:12px;opacity:0.4">Marcha</span>' +
+                            '</div>'
+                    },
+                    tooltip: {
+                        valueSuffix: ' km/h'
+                    }
+                }]
+
+            }));
+
+
+
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // ----------------------------------- BULLET SENSIBILIDADE --------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//    
+
+
+            var bulletSensibilidade = Highcharts.chart('container-sensibilidade', {
+                chart: {
+                    inverted: true,
+                    marginLeft: 0,
+                    marginTop: 30,
+                    type: 'bullet'
+                },
+                title: {
+                    text: 'Sensibilidade'
+                },
+                xAxis: {
+                    //categories: ['<span class="hc-cat-title">Revenue</span><br/>U.S. $ (1,000s)']
+                },
+                tooltip: {
+                    enabled: false
+                },
+                yAxis: {
+                    plotBands: [
+                        {
+                            from: 0,
+                            to: 1,
+                            color: '#55BF3B'
+                        }, {
+                            from: 1,
+                            to: 2,
+                            color: '#DDDF0D'
+                        }, {
+                            from: 2,
+                            to: 3,
+                            color: '#DF5353'
+                        }],
+                    title: 'null'
+                },
+                series: [{
+                    name: '',
+                    data: [{
+                        y: 1,
+                        target: 3
+                    }]
+                }],
+                exporting: { enabled: false }
+            });
+
+
+
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // ----------------------------------- GAUGE VELOCIDADE ------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+            // -----------------------------------------------------------------------------------------//
+
+
+            var gaugeVelocidade = Highcharts.chart('container-velocidade', {
+
+                chart: {
+                    type: 'gauge',
+                    plotBackgroundColor: null,
+                    plotBackgroundImage: null,
+                    plotBorderWidth: 0,
+                    plotShadow: false
+                },
+
+                title: {
+                    text: ''
+                },
+
+                exporting: { enabled: false },
+
+                pane: {
+                    startAngle: -150,
+                    endAngle: 150,
+                    background: [{
+                        backgroundColor: {
+                            linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                            stops: [
+                                [0, '#FFF'],
+                                [1, '#333']
+                            ]
+                        },
+                        borderWidth: 0,
+                        outerRadius: '109%'
+                    }, {
+                        backgroundColor: {
+                            linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                            stops: [
+                                [0, '#333'],
+                                [1, '#FFF']
+                            ]
+                        },
+                        borderWidth: 1,
+                        outerRadius: '107%'
+                    }, {
+                        // default background
+                    }, {
+                        backgroundColor: '#DDD',
+                        borderWidth: 0,
+                        outerRadius: '105%',
+                        innerRadius: '103%'
+                    }]
+                },
+
+                // the value axis
+                yAxis: {
+                    min: 0,
+                    max: 200,
+
+                    minorTickInterval: 'auto',
+                    minorTickWidth: 1,
+                    minorTickLength: 10,
+                    minorTickPosition: 'inside',
+                    minorTickColor: '#666',
+
+                    tickPixelInterval: 30,
+                    tickWidth: 2,
+                    tickPosition: 'inside',
+                    tickLength: 10,
+                    tickColor: '#666',
+                    labels: {
+                        step: 2,
+                        rotation: 'auto'
+                    },
+                    title: {
+                        text: 'km/h'
+                    },
+                    plotBands: [{
+                        from: 0,
+                        to: 120,
+                        color: '#55BF3B' // green
+                    }, {
+                        from: 120,
+                        to: 160,
+                        color: '#DDDF0D' // yellow
+                    }, {
+                        from: 160,
+                        to: 200,
+                        color: '#DF5353' // red
+                    }]
+                },
+
+                series: [{
+                    name: 'Speed',
+                    data: [0],
+                    tooltip: {
+                        valueSuffix: ' km/h'
+                    }
+                }]
+
+            });
+
+
+
+
+
+
+
+
+            // setInterval(()=>{
+            //     gaugeMarcha.update({series:{data:[parseInt(Math.random()*200)]}})
+            //     gaugeVelocidade.update({series:{data:[parseInt(Math.random()*200)]}})
+            // },1000)
+
+
+
+
+
+
+
+
+
+            document.onkeydown = function (key) {
+                switch (key.key) {
+                    case 'ArrowUp': socket.emit('frente');
+                        gaugeVelocidade.update({ series: { data: [carro.frente()] } })
+                        break;
+                    case 'ArrowDown': socket.emit('tras')
+                        gaugeVelocidade.update({ series: { data: [carro.tras()] } })
+                        break;
+                    case 'ArrowLeft': socket.emit('esquerda');
+                        break;
+                    case 'ArrowRight': socket.emit('direita')
+                        break;
+                    case 'Shift': socket.emit('velUp')
+                        gaugeMarcha.update({ series: { data: [carro.subirMarcha()] } })
+
+                        break;
+                    case 'Control': socket.emit('velDown')
+                        gaugeMarcha.update({ series: { data: [carro.descerMarcha()] } })
+                        break;
+                    case 'a': socket.emit('piscar')
+                        break;
+                    case '1': socket.emit('sensibilidade1')
+                        bulletSensibilidade.update({ series: [{ data: [{ y: carro.sensibilidade(1) }] }] })
+                        break;
+                    case '2': socket.emit('sensibilidade2')
+                        bulletSensibilidade.update({ series: [{ data: [{ y: carro.sensibilidade(2) }] }] })
+                        break;
+                    case '3': socket.emit('sensibilidade3')
+                        bulletSensibilidade.update({ series: [{ data: [{ y: carro.sensibilidade(3) }] }] })
+                        break;
+                }
+
+            }
+
+            document.onkeyup = function (e) {
+                if (e.key == 'ArrowLeft' || e.key == 'ArrowRight') {
+                    socket.emit('pararDirecao')
+                }
+                if (e.key == 'ArrowUp' || e.key == 'ArrowDown') {
+                    gaugeVelocidade.update({ series: { data: [parseInt(0)] } })
+                    socket.emit('pararMovimento')
+                }
+            }
+
+            socket.on('marcha', data => {
+                document.getElementById('div_velocidade').innerHTML = `Velocidade Atual --> <b>${data}</b>`
+                console.log('marcha')
+            })
+        </script>
+</body>
+
+</html>
